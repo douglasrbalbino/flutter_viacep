@@ -12,7 +12,7 @@ class ViaCepApi extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange),
       ),
-      home: const MyHomePage(title: 'Via CEP APi'),
+      home: const MyHomePage(),
     );
   }
 }

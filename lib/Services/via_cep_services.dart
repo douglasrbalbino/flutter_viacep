@@ -19,5 +19,6 @@ class ViaCepServices {
 
       return endereco;
     }
+    return null;
   }
 }
