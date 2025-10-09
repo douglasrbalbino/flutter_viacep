@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_application_3/Models/endereco.dart';
+import 'package:flutter_application_3/Pages/login.dart';
 import 'package:flutter_application_3/Services/via_cep_services.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -259,7 +260,15 @@ class _MyHomePageState extends State<MyHomePage> {
                 ],
               ),
 
-            ElevatedButton(onPressed: () {}, child: Text("Buscar")),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const MyLogin()),
+                );
+              },
+              child: Text("Home"),
+            ),
           ],
         ),
       ),
