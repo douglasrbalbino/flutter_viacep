@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_3/Models/usuario_model.dart';
+import 'package:flutter_application_3/Services/firebase_service.dart';
 
 class FormCadastroUsuarioPage extends StatefulWidget {
   const FormCadastroUsuarioPage({super.key});
@@ -17,6 +19,49 @@ class _FormCadastroUsuarioPageState extends State<FormCadastroUsuarioPage> {
   TextEditingController confirmacaoController = TextEditingController();
 
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
+
+  final FirebaseService _firebaseService = FirebaseService(
+    collectionName: "usuarios",
+  );
+
+  Future<void> salvarUsuario() async {
+    if (!formKey.currentState!.validate()) {
+      return;
+    }
+
+    Usuario usuario = Usuario(
+      id: "",
+      nome: nomeController.text,
+      email: emailController.text,
+      telefone: telefoneController.text,
+      cpf: cpfController.text,
+      senha: senhaController.text,
+    );
+
+    try {
+      String idUser = await _firebaseService.create(usuario.toMap());
+      if (idUser.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: Colors.red,
+            elevation: 30,
+            content: Column(
+              children: [
+                Text(
+                  "Sucesso: $idUser",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text("Usuário cadastrado com sucesso"),
+              ],
+            ),
+          ),
+        );
+      }
+    } catch (erro) {}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,7 +155,7 @@ class _FormCadastroUsuarioPageState extends State<FormCadastroUsuarioPage> {
                     TextFormField(
                       validator: (value) {
                         if (value!.isEmpty) {
-                          return "Insira seu nome";
+                          return "O campo confirmação é obrigatório";
                         }
 
                         if (value != senhaController.text) {
@@ -127,10 +172,7 @@ class _FormCadastroUsuarioPageState extends State<FormCadastroUsuarioPage> {
 
                     ElevatedButton(
                       onPressed: () {
-                        if (!formKey.currentState!.validate()) {
-                          return;
-                        }
-                        print("Formulário validado");
+                        salvarUsuario();
                       },
                       child: Text("Cadastrar"),
                     ),
