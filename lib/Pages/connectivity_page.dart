@@ -10,6 +10,9 @@ class ConnectivityPage extends StatefulWidget {
 class _ConnectivityPageState extends State<ConnectivityPage> {
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Scaffold(
+      appBar: AppBar(title: Text("Status de Conectividade")),
+      body: Center(child: Column(children: [Icon(Icons.wifi)])),
+    );
   }
 }
