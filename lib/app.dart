@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_3/Pages/listar_usuario_page.dart';
+import 'package:flutter_application_3/Pages/location_page.dart';
 
 
 class ViaCepApi extends StatelessWidget {
@@ -13,7 +13,7 @@ class ViaCepApi extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const ListarUsuarioPage(),
+      home: const LocationPage(),
     );
   }
 }
