@@ -2,11 +2,8 @@
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-<<<<<<< HEAD
     <uses-permission android:name="android.permission.ACESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
-=======
->>>>>>> 0ee93618195d3b6b732574db9c375140475c4ab7
 
     <application
         android:label="flutter_application_3"
