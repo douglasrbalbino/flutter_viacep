@@ -1,48 +1,75 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_application_3/Models/endereco.dart';
-import 'package:flutter_application_3/Pages/login.dart';
+import 'package:flutter_application_3/Services/connectivity_service.dart';
 import 'package:flutter_application_3/Services/via_cep_services.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<MyHomePage> createState() => _HomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  TextEditingController controllerCep = TextEditingController();
-  TextEditingController controllerLogradouro = TextEditingController();
-  TextEditingController controllerComplemento = TextEditingController();
-  TextEditingController controllerBairro = TextEditingController();
-  TextEditingController controllerCidade = TextEditingController();
-  TextEditingController controllerEstado = TextEditingController();
-  Endereco? endereco; // Variável podereceber null
+class _HomePageState extends State<MyHomePage> {
+  final ConnectivityService _connectivityService = ConnectivityService();
+  TextEditingController cepController = TextEditingController();
+  TextEditingController logradouroController = TextEditingController();
+  TextEditingController complementoController = TextEditingController();
+  TextEditingController bairroController = TextEditingController();
+  TextEditingController cidadeController = TextEditingController();
+  TextEditingController estadoController = TextEditingController();
+  Endereco? endereco;
   bool isLoading = false;
 
-  ViaCepServices viaCepServices = ViaCepServices();
+  ViaCepServices viaCepService = ViaCepServices();
 
-  Future<void> buscarCep(String Cep) async {
-    clearController();
+  Future<void> buscarCep(String cep) async {
+    bool isOnline = await _connectivityService.checkconnectivity();
+
+    if (!isOnline) {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            icon: Icon(Icons.wifi_off, color: Colors.red),
+            title: Text('SEM CONEXÃO'),
+            content: Text(
+              'Parece que você está offline. Por favor, verifique sua conexão com a internet.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+      return; // Interrompe a execução se estiver offline
+    }
+
+    clearControllers();
     setState(() {
       isLoading = true;
     });
     try {
-      Endereco? response = await viaCepServices.buscarEndereco(Cep);
-
-      if (response?.localidade == null) {
+      Endereco? response = await viaCepService.buscarEndereco(cep);
+      if (response == null) {
         showDialog(
           context: context,
           builder: (context) {
             return AlertDialog(
-              icon: Icon(Icons.warning),
-              title: Text("Atenção"),
-              content: Text("CEP não encontrado."),
+              icon: Icon(Icons.warning, color: Colors.red),
+              title: Text('ATENÇÃO'),
+              content: Text('CEP não encontrado!'),
             );
           },
         );
-        controllerCep.clear();
+        cepController.clear();
         return;
       }
 
@@ -52,7 +79,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
       setControllersCep(endereco!);
     } catch (erro) {
-      throw Exception("Erro ao buscar CEP: $erro");
+      throw Exception("Erro ao buscar cep: $erro");
     } finally {
       setState(() {
         isLoading = false;
@@ -61,215 +88,110 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void setControllersCep(Endereco endereco) {
-    controllerLogradouro.text = endereco.logradouro!;
-    controllerComplemento.text = endereco.complemento!;
-    controllerBairro.text = endereco.bairro!;
-    controllerCidade.text = endereco.localidade!;
-    controllerEstado.text = endereco.estado!;
+    cepController.text = endereco.cep!;
+    logradouroController.text = endereco.logradouro!;
+    complementoController.text = endereco.complemento!;
+    bairroController.text = endereco.bairro!;
+    cidadeController.text = endereco.localidade!;
+    estadoController.text = endereco.estado!;
   }
 
-  void clearController() {
-    controllerBairro.clear();
-    controllerComplemento.clear();
-    controllerCidade.clear();
-    controllerLogradouro.clear();
-    controllerEstado.clear();
+  void clearControllers() {
+    bairroController.clear();
+    logradouroController.clear();
+    complementoController.clear();
+    cidadeController.clear();
+    estadoController.clear();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text("App de mapa de lugares do mundo"),
+      ),
       body: Center(
-        child: Column(
-          spacing: 20,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.home, size: 200, color: Colors.orange),
-            SizedBox(
-              width: 300,
-              child: TextField(
-                onChanged: (valor) {
-                  if (valor.isEmpty) {
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            spacing: 20,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset('assets/images/garden.png', height: 150),
+              TextField(
+                onChanged: (value) {
+                  if (value.isEmpty) {
                     setState(() {
                       endereco = null;
                     });
-                    clearController();
+                    clearControllers();
                   }
                 },
-                controller: controllerCep,
-                maxLength: 8,
+                controller: cepController,
+                maxLength: 9,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 keyboardType: TextInputType.number,
-                style: TextStyle(color: Colors.orange),
                 decoration: InputDecoration(
                   suffixIcon: isLoading
-                      ? SizedBox(
-                          width: 10,
-                          height: 10,
-                          child: Padding(
-                            padding: const EdgeInsets.all(
-                              15.0,
-                            ), // Ao adicionar o padding, o icone de loading se adaptou dentro do pai
-                            child: CircularProgressIndicator(),
-                          ),
+                      ? Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: CircularProgressIndicator(),
                         )
                       : IconButton(
                           onPressed: () {
-                            buscarCep(controllerCep.text);
+                            buscarCep(cepController.text);
                           },
                           icon: Icon(Icons.search),
                         ),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.orange),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.orange),
-                  ),
-                  border: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.orange, width: 5),
-                  ),
+                  border: OutlineInputBorder(),
                   labelText: "CEP",
-                  labelStyle: TextStyle(color: Colors.orange),
                 ),
               ),
-            ),
-
-            if (endereco?.bairro != null)
-              Column(
-                spacing: 10,
-                children: [
-                  SizedBox(
-                    width: 300,
-                    child: TextField(
-                      controller: controllerLogradouro,
-                      style: TextStyle(color: Colors.orange),
+              if (endereco?.bairro != null)
+                Column(
+                  spacing: 20,
+                  children: [
+                    TextField(
+                      controller: logradouroController,
                       decoration: InputDecoration(
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.orange),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.orange),
-                        ),
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Colors.orange,
-                            width: 5,
-                          ),
-                        ),
+                        border: OutlineInputBorder(),
                         labelText: "Logradouro",
-                        labelStyle: TextStyle(color: Colors.orange),
                       ),
                     ),
-                  ),
-
-                  SizedBox(
-                    width: 300,
-                    child: TextField(
-                      controller: controllerComplemento,
-                      style: TextStyle(color: Colors.orange),
+                    // if (complementoController.text.isNotEmpty)
+                    TextField(
+                      controller: complementoController,
                       decoration: InputDecoration(
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.orange),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.orange),
-                        ),
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Colors.orange,
-                            width: 5,
-                          ),
-                        ),
+                        border: OutlineInputBorder(),
                         labelText: "Complemento",
-                        labelStyle: TextStyle(color: Colors.orange),
                       ),
                     ),
-                  ),
-
-                  SizedBox(
-                    width: 300,
-                    child: TextField(
-                      controller: controllerBairro,
-                      style: TextStyle(color: Colors.orange),
+                    TextField(
+                      controller: bairroController,
                       decoration: InputDecoration(
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.orange),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.orange),
-                        ),
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Colors.orange,
-                            width: 5,
-                          ),
-                        ),
+                        border: OutlineInputBorder(),
                         labelText: "Bairro",
-                        labelStyle: TextStyle(color: Colors.orange),
                       ),
                     ),
-                  ),
-
-                  SizedBox(
-                    width: 300,
-                    child: TextField(
-                      controller: controllerCidade,
-                      style: TextStyle(color: Colors.orange),
+                    TextField(
+                      controller: cidadeController,
                       decoration: InputDecoration(
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.orange),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.orange),
-                        ),
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Colors.orange,
-                            width: 5,
-                          ),
-                        ),
+                        border: OutlineInputBorder(),
                         labelText: "Cidade",
-                        labelStyle: TextStyle(color: Colors.orange),
                       ),
                     ),
-                  ),
-
-                  SizedBox(
-                    width: 300,
-                    child: TextField(
-                      controller: controllerEstado,
-                      style: TextStyle(color: Colors.orange),
+                    TextField(
+                      controller: estadoController,
                       decoration: InputDecoration(
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.orange),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.orange),
-                        ),
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Colors.orange,
-                            width: 5,
-                          ),
-                        ),
+                        border: OutlineInputBorder(),
                         labelText: "Estado",
-                        labelStyle: TextStyle(color: Colors.orange),
                       ),
                     ),
-                  ),
-                ],
-              ),
-
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const MyLogin()),
-                );
-              },
-              child: Text("Home"),
-            ),
-          ],
+                  ],
+                ),
+            ],
+          ),
         ),
       ),
     );

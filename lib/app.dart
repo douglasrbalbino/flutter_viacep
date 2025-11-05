@@ -1,5 +1,6 @@
+// import 'package:api_consumo/Pages/mapa_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_3/Pages/location_page.dart';
+import 'package:flutter_application_3/Pages/home_page.dart';
 
 class ViaCepApi extends StatelessWidget {
   const ViaCepApi({super.key});
@@ -7,12 +8,12 @@ class ViaCepApi extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
+      title: 'ACO ACO ACO ACO',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFA7C957)),
       ),
-      home: const ConnectivityPage(),
+      home: const MyHomePage(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
