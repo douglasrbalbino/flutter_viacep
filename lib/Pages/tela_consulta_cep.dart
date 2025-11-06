@@ -13,15 +13,13 @@ class ConsultaCepPage extends StatefulWidget {
 }
 
 class _ConsultaCepPageState extends State<ConsultaCepPage> {
-  // Variáveis de estado (Etapa 3.1)
   bool _temInternet = true;
   bool _buscando = false;
   Endereco? _enderecoEncontrado;
   String? _mensagemErro;
   List<String> _historico = [];
-  bool _veioDoCache = false; // Controla o badge "Online" ou "Cache"
+  bool _veioDoCache = false;
 
-  // Serviços e Controllers (Etapa 3.2)
   final ConnectivityService _connectivityService = ConnectivityService();
   final ViaCepServices _viaCepService = ViaCepServices();
   final TextEditingController _cepController = TextEditingController();
@@ -30,14 +28,16 @@ class _ConsultaCepPageState extends State<ConsultaCepPage> {
   @override
   void initState() {
     super.initState();
-    // Etapa 3.3 - Inicialização
     _connectivityService.initialize();
     _verificarConexaoInicial();
     _ouvirMudancasDeConexao();
     _carregarHistorico();
+
+    _cepController.addListener(() {
+      setState(() {});
+    });
   }
 
-  // Verifica a conexão assim que a tela abre
   Future<void> _verificarConexaoInicial() async {
     bool isConnected = await _connectivityService.checkconnectivity();
     setState(() {
@@ -45,20 +45,19 @@ class _ConsultaCepPageState extends State<ConsultaCepPage> {
     });
   }
 
-  // Ouve mudanças na conexão (Ex: usuário liga/desliga o WiFi)
   void _ouvirMudancasDeConexao() {
-    _connectivitySubscription =
-        _connectivityService.connectivityStream.listen((status) {
+    _connectivitySubscription = _connectivityService.connectivityStream.listen((
+      status,
+    ) {
       setState(() {
         _temInternet = status;
         if (status) {
-          _mensagemErro = null; // Limpa erros de "sem internet"
+          _mensagemErro = null;
         }
       });
     });
   }
 
-  // Carrega a lista de CEPs salvos no CacheService
   Future<void> _carregarHistorico() async {
     try {
       final ceps = await _viaCepService.obterHistorico();
@@ -66,14 +65,13 @@ class _ConsultaCepPageState extends State<ConsultaCepPage> {
         _historico = ceps;
       });
     } catch (e) {
-      // Tratar erro ao carregar histórico, se necessário
+      throw Exception(Text("Histórico não carregado."));
     }
   }
 
-  // Limpa o cache e atualiza a UI
   Future<void> _limparHistorico() async {
     await _viaCepService.limparHistorico();
-    _carregarHistorico(); // Recarrega a lista (agora vazia)
+    _carregarHistorico();
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text("Histórico limpo com sucesso!"),
@@ -82,9 +80,7 @@ class _ConsultaCepPageState extends State<ConsultaCepPage> {
     );
   }
 
-  // Método principal de busca (Etapa 3.4)
   Future<void> _buscarCep(String cep) async {
-    // Limpa resultados anteriores
     setState(() {
       _buscando = true;
       _enderecoEncontrado = null;
@@ -93,23 +89,20 @@ class _ConsultaCepPageState extends State<ConsultaCepPage> {
     });
 
     try {
-      // Verifica a conexão ANTES de tentar buscar
       final temConexao = await _connectivityService.checkconnectivity();
       setState(() {
         _temInternet = temConexao;
       });
 
-      // Chama o serviço que já tem a lógica de cache/api
       final endereco = await _viaCepService.buscarEndereco(cep);
 
       if (endereco != null) {
         setState(() {
           _enderecoEncontrado = endereco;
-          // Se não tínhamos internet, sabemos que veio do cache
+
           _veioDoCache = !temConexao;
         });
 
-        // Atualiza o histórico na UI
         if (!_historico.contains(cep)) {
           _carregarHistorico();
         }
@@ -119,7 +112,6 @@ class _ConsultaCepPageState extends State<ConsultaCepPage> {
         });
       }
     } catch (e) {
-      // Captura a exceção (ex: offline e sem cache)
       setState(() {
         _mensagemErro = e.toString().replaceAll("Exception: ", "");
       });
@@ -132,38 +124,33 @@ class _ConsultaCepPageState extends State<ConsultaCepPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Etapa 3.5 - Construção da Interface
     return Scaffold(
       appBar: AppBar(
         title: const Text("Consulta de CEP"),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
-        actions: [
-          // (Etapa 3.5.A) Indicador de Conexão
-          _buildStatusIcon(),
-        ],
+        actions: [_buildStatusIcon()],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // (Etapa 3.5.B) Banner Offline
             if (!_temInternet) _buildOfflineBanner(),
             const SizedBox(height: 16),
-            // (Etapa 3.5.C) Campo de CEP
+
             _buildCepInputField(),
             const SizedBox(height: 16),
-            // (Etapa 3.5.D) Botão de Buscar
+
             _buildSearchButton(),
             const SizedBox(height: 20),
-            // (Etapa 3.5.E) Mensagem de Erro
+
             if (_mensagemErro != null) _buildErrorMessage(),
-            // (Etapa 3.5.F) Card de Resultado
+
             if (_enderecoEncontrado != null)
               _buildResultCard(_enderecoEncontrado!),
             const SizedBox(height: 20),
-            // (Etapa 3.5.G) Seção de Histórico
+
             if (_historico.isNotEmpty) _buildHistorySection(),
           ],
         ),
@@ -171,7 +158,6 @@ class _ConsultaCepPageState extends State<ConsultaCepPage> {
     );
   }
 
-  // (Etapa 3.5.A)
   Widget _buildStatusIcon() {
     return Padding(
       padding: const EdgeInsets.only(right: 16.0),
@@ -193,7 +179,6 @@ class _ConsultaCepPageState extends State<ConsultaCepPage> {
     );
   }
 
-  // (Etapa 3.5.B)
   Widget _buildOfflineBanner() {
     return Container(
       padding: const EdgeInsets.all(12.0),
@@ -209,7 +194,10 @@ class _ConsultaCepPageState extends State<ConsultaCepPage> {
           Expanded(
             child: Text(
               "Você está offline. Apenas CEPs já consultados podem ser buscados no cache.",
-              style: TextStyle(color: Colors.orange, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                color: Colors.orange,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],
@@ -217,17 +205,13 @@ class _ConsultaCepPageState extends State<ConsultaCepPage> {
     );
   }
 
-  // (Etapa 3.5.C)
   Widget _buildCepInputField() {
     return TextField(
       controller: _cepController,
       decoration: InputDecoration(
         labelText: "Digite o CEP",
         border: const OutlineInputBorder(),
-        prefixIcon: Icon(
-          // Ícone de cache quando offline
-          !_temInternet ? Icons.storage : Icons.search,
-        ),
+        prefixIcon: Icon(!_temInternet ? Icons.storage : Icons.search),
         suffixIcon: _cepController.text.isNotEmpty
             ? IconButton(
                 icon: const Icon(Icons.clear),
@@ -249,7 +233,6 @@ class _ConsultaCepPageState extends State<ConsultaCepPage> {
     );
   }
 
-  // (Etapa 3.5.D)
   Widget _buildSearchButton() {
     return ElevatedButton.icon(
       icon: _buscando
@@ -269,9 +252,7 @@ class _ConsultaCepPageState extends State<ConsultaCepPage> {
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.blue,
         padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
       // Desabilita o botão se estiver buscando ou se o CEP for inválido
       onPressed: _buscando || _cepController.text.length < 8
@@ -284,7 +265,6 @@ class _ConsultaCepPageState extends State<ConsultaCepPage> {
     );
   }
 
-  // (Etapa 3.5.E)
   Widget _buildErrorMessage() {
     return Container(
       padding: const EdgeInsets.all(12.0),
@@ -301,7 +281,9 @@ class _ConsultaCepPageState extends State<ConsultaCepPage> {
             child: Text(
               _mensagemErro!,
               style: const TextStyle(
-                  color: Colors.red, fontWeight: FontWeight.w500),
+                color: Colors.red,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],
@@ -309,7 +291,6 @@ class _ConsultaCepPageState extends State<ConsultaCepPage> {
     );
   }
 
-  // (Etapa 3.5.F)
   Widget _buildResultCard(Endereco endereco) {
     return Card(
       elevation: 2,
@@ -342,7 +323,10 @@ class _ConsultaCepPageState extends State<ConsultaCepPage> {
                   side: BorderSide(
                     color: _veioDoCache ? Colors.orange : Colors.green,
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 0,
+                  ),
                 ),
               ],
             ),
@@ -369,18 +353,12 @@ class _ConsultaCepPageState extends State<ConsultaCepPage> {
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 16),
-            ),
-          ),
+          Expanded(child: Text(value, style: const TextStyle(fontSize: 16))),
         ],
       ),
     );
   }
 
-  // (Etapa 3.5.G)
   Widget _buildHistorySection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

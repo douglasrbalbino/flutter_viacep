@@ -4,8 +4,6 @@ import 'package:flutter_application_3/Pages/tela_consulta_cep.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // A inicialização do Firebase é mantida, embora não seja usada nesta tela
-  // Pode ser útil para outras partes do app
   await Firebase.initializeApp();
 
   // Envolve a ConsultaCepPage em um MaterialApp
@@ -18,9 +16,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Consulta de CEP', // (Etapa 4.1)
+      title: 'Consulta de CEP',
       theme: ThemeData(
-        // (Etapa 4.1)
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
         chipTheme: ChipThemeData(
@@ -29,7 +26,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const ConsultaCepPage(), // (Etapa 4.1)
+      home: const ConsultaCepPage(),
       debugShowCheckedModeBanner: false,
     );
   }

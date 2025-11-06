@@ -1,4 +1,3 @@
-// import 'package:api_consumo/Pages/mapa_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_3/Pages/home_page.dart';
 
